@@ -1,6 +1,7 @@
 import 'package:flagle/features/country/presentation/screens/guess_country_screen.dart';
 import 'package:flagle/features/country/presentation/screens/home_screen.dart';
 import 'package:flagle/features/country/presentation/screens/main_country_screen.dart';
+import 'package:flagle/main.dart';
 import 'package:go_router/go_router.dart';
 
 class AppRouter {
@@ -9,7 +10,10 @@ class AppRouter {
     routes: <RouteBase>[
       ShellRoute(
         builder: (context, state, child) {
-          return MainCountryScreen(child: child);
+          return ThemeNotifierProvider(
+            themeNotifier: ThemeNotifierProvider.of(context),
+            child: MainCountryScreen(child: child),
+          );
         },
         routes: [
           GoRoute(path: '/', builder: (context, state) => HomeScreen()),

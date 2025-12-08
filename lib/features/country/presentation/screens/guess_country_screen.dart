@@ -130,51 +130,98 @@ class _GuessCountryScreenState extends State<GuessCountryScreen> {
                       if (country.flagImageUrl.isNotEmpty)
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            width: double.infinity,
-                            height: 250,
-                            color: Theme.of(context).colorScheme.secondary,
-                            child: country.flagImageUrl.endsWith('.svg')
-                                ? SvgPicture.network(
-                                    country.flagImageUrl,
-                                    placeholderBuilder: (context) =>
-                                        const CircularProgressIndicator(),
-                                    fit: BoxFit.fill,
-                                  )
-                                : Image.network(
-                                    country.flagImageUrl,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return const Icon(Icons.error);
-                                    },
-                                    fit: BoxFit.contain,
+                          child: Stack(
+                            children: [
+                              Container(
+                                width: double.infinity,
+                                height: 250,
+                                color: Theme.of(context).colorScheme.secondary,
+                                child: country.flagImageUrl.endsWith('.svg')
+                                    ? SvgPicture.network(
+                                        country.flagImageUrl,
+                                        placeholderBuilder: (context) => Center(
+                                          child:
+                                              const CircularProgressIndicator(),
+                                        ),
+                                        fit: BoxFit.fill,
+                                      )
+                                    : Image.network(
+                                        country.flagImageUrl,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                              return const Icon(Icons.error);
+                                            },
+                                        fit: BoxFit.contain,
+                                      ),
+                              ),
+                              Positioned(
+                                bottom: 8,
+                                right: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
                                   ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.7),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Text(
+                                    'Current try: ${state.currentTry + 1}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         )
                       else
                         const Text('No flag image url found'),
-                      Text('Current try: ${state.currentTry}'),
                       Row(
                         spacing: 8,
                         children: <Widget>[
                           if (state.currentTry > 1)
-                            _HintComponent(hint: '🗺️ ${country.continent}'),
+                            _HintComponent(
+                              hint: '🗺️ ${country.continent}',
+                              hintIndex: 0,
+                              isOpened: false,
+                            ),
                           if (state.currentTry > 2)
                             _HintComponent(
                               hint: '👥 ${country.population.toString()}',
+                              hintIndex: 1,
+                              isOpened: false,
                             ),
                           if (state.currentTry > 3)
-                            _HintComponent(hint: '🚩 ${country.name}'),
-                        ],
-                      ),
-                      Column(
-                        spacing: 8,
-                        children: [
-                          for (var selectedCountry in _selectedCountryNames)
-                            _SelectedCountryComponent(
-                              countryName: selectedCountry,
+                            _HintComponent(
+                              hint: '🚩 ${country.name}',
+                              hintIndex: 2,
+                              isOpened: false,
                             ),
                         ],
                       ),
+                      if (_selectedCountryNames.isNotEmpty)
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 200),
+                          child: SingleChildScrollView(
+                            child: Column(
+                              spacing: 8,
+                              children: [
+                                for (var selectedCountry
+                                    in _selectedCountryNames)
+                                  _SelectedCountryComponent(
+                                    selectedCountryIndex: _selectedCountryNames
+                                        .indexOf(selectedCountry)
+                                        .toString(),
+                                    countryName: selectedCountry,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
                       _CountryAutocomplete(
                         controller: countryNameController,
                         countryNames: _remainingCountryNames,
@@ -185,11 +232,20 @@ class _GuessCountryScreenState extends State<GuessCountryScreen> {
                           Expanded(
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).colorScheme.secondary,
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.secondary,
                                 minimumSize: const Size(0, 36.0),
                               ),
                               onPressed: () => _skipCountry(),
-                              child: Text('Skip', style: TextStyle(color: Theme.of(context).colorScheme.onSecondary)),
+                              child: Text(
+                                'Skip',
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSecondary,
+                                ),
+                              ),
                             ),
                           ),
                           Expanded(
@@ -204,7 +260,14 @@ class _GuessCountryScreenState extends State<GuessCountryScreen> {
                                 minimumSize: const Size(0, 36.0),
                               ),
                               onPressed: () => _checkAnswer(country),
-                              child: Text('Check Answer', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
+                              child: Text(
+                                'Check Answer',
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimary,
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -316,28 +379,60 @@ class _CountryAutocomplete extends StatelessWidget {
   }
 }
 
-class _HintComponent extends StatelessWidget {
+class _HintComponent extends StatefulWidget {
   final String hint;
+  final int hintIndex;
+  final bool isOpened;
 
-  const _HintComponent({required this.hint});
+  const _HintComponent({
+    required this.hint,
+    required this.hintIndex,
+    this.isOpened = false,
+  });
+
+  @override
+  State<_HintComponent> createState() => _HintComponentState();
+}
+
+class _HintComponentState extends State<_HintComponent> {
+  late bool _isOpened;
+
+  @override
+  void initState() {
+    super.initState();
+    _isOpened = widget.isOpened;
+  }
+
+  void _onTap() {
+    setState(() {
+      _isOpened = !_isOpened;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Center(
-            child: Text(
-              hint,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSecondary,
-                fontStyle: FontStyle.italic,
-              ),
+      child: GestureDetector(
+        onTap: _onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Theme.of(context).colorScheme.onPrimary),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          height: 40,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Center(
+              child: _isOpened
+                  ? Text(
+                      widget.hint,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    )
+                  : Icon(Icons.lightbulb, color: Colors.yellow, size: 20),
             ),
           ),
         ),
@@ -347,8 +442,12 @@ class _HintComponent extends StatelessWidget {
 }
 
 class _SelectedCountryComponent extends StatelessWidget {
+  final String selectedCountryIndex;
   final String countryName;
-  const _SelectedCountryComponent({required this.countryName});
+  const _SelectedCountryComponent({
+    required this.selectedCountryIndex,
+    required this.countryName,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -361,8 +460,15 @@ class _SelectedCountryComponent extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Row(
-          spacing: 8,
+          spacing: 6,
           children: [
+            Text(
+              '#${int.parse(selectedCountryIndex) + 1}',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSecondary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             Icon(
               Icons.wrong_location,
               color: Theme.of(context).colorScheme.onSecondary,

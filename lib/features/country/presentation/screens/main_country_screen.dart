@@ -1,3 +1,4 @@
+import 'package:flagle/main.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -82,7 +83,7 @@ class MainCountryScreen extends StatelessWidget {
             ListTile(
               leading: Icon(
                 Icons.home,
-                color: Theme.of(context).colorScheme.onSecondary,
+                color: Theme.of(context).colorScheme.primary,
               ),
               title: const Text('Home'),
               selected: _isCurrentRoute(context, '/'),
@@ -94,7 +95,7 @@ class MainCountryScreen extends StatelessWidget {
             ListTile(
               leading: Icon(
                 Icons.quiz,
-                color: Theme.of(context).colorScheme.onSecondary,
+                color: Theme.of(context).colorScheme.primary,
               ),
               title: const Text('Guess Country'),
               selected: _isCurrentRoute(context, '/guess-country'),
@@ -104,24 +105,32 @@ class MainCountryScreen extends StatelessWidget {
               onTap: () => _navigateToRoute(context, '/guess-country'),
             ),
             const Divider(),
-            ListTile(
-              leading: Icon(
-                Icons.settings,
-                color: Theme.of(context).colorScheme.onSecondary,
-              ),
-              title: const Text('Settings'),
-              onTap: () {
-                // TODO: Navegar a pantalla de configuración
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Settings coming soon!')),
+            // Theme Toggle
+            ValueListenableBuilder<ThemeMode>(
+              valueListenable: ThemeNotifierProvider.of(context),
+              builder: (context, themeMode, child) {
+                final isDark = themeMode == ThemeMode.dark;
+                return SwitchListTile(
+                  secondary: Icon(
+                    isDark ? Icons.dark_mode : Icons.light_mode,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  title: const Text('Dark Mode'),
+                  value: isDark,
+                  onChanged: (value) {
+                    final themeNotifier = ThemeNotifierProvider.of(context);
+                    themeNotifier.setTheme(
+                      value ? ThemeMode.dark : ThemeMode.light,
+                    );
+                  },
                 );
               },
             ),
+            const Divider(),
             ListTile(
               leading: Icon(
                 Icons.info,
-                color: Theme.of(context).colorScheme.onSecondary,
+                color: Theme.of(context).colorScheme.primary,
               ),
               title: const Text('About'),
               onTap: () {
@@ -134,68 +143,14 @@ class MainCountryScreen extends StatelessWidget {
                   applicationIcon: Icon(
                     Icons.flag,
                     size: 48,
-                    color: Theme.of(context).colorScheme.onSecondary,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                   children: [
                     Text(
                       'A fun game to guess countries by their flags!',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSecondary,
-                      ),
+                      style: TextStyle(color: Colors.grey),
                     ),
                   ],
-                );
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: Icon(
-                Icons.exit_to_app,
-                color: Theme.of(context).colorScheme.onSecondary,
-              ),
-              title: const Text('Exit'),
-              onTap: () {
-                Navigator.pop(context);
-                // Mostrar diálogo de confirmación
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: Text(
-                      'Exit App',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSecondary,
-                      ),
-                    ),
-                    content: Text(
-                      'Are you sure you want to exit?',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSecondary,
-                      ),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text(
-                          'Cancel',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSecondary,
-                          ),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          // Cerrar la app (solo funciona en algunas plataformas)
-                          // En web/móvil, esto puede no funcionar como se espera
-                        },
-                        child: Text(
-                          'Exit',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSecondary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 );
               },
             ),
@@ -206,22 +161,9 @@ class MainCountryScreen extends StatelessWidget {
         type: BottomNavigationBarType.fixed,
         currentIndex: currentIndex,
         onTap: (index) => _onItemTapped(context, index),
-        selectedLabelStyle: TextStyle(fontWeight: FontWeight.bold),
         items: [
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.home,
-              color: Theme.of(context).colorScheme.onSecondary,
-            ),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.quiz,
-              color: Theme.of(context).colorScheme.onSecondary,
-            ),
-            label: 'Guess',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.quiz), label: 'Guess'),
         ],
       ),
     );
