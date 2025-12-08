@@ -1,4 +1,5 @@
 import 'package:flagle/core/routes/app_router.dart';
+import 'package:flagle/core/theme/app_theme.dart';
 import 'package:flagle/dependency_injection.dart';
 import 'package:flagle/features/country/presentation/bloc/country_bloc.dart';
 import 'package:flutter/material.dart';
@@ -23,11 +24,9 @@ class MyApp extends StatelessWidget {
       child: MaterialApp.router(
         routerConfig: AppRouter.router,
         title: 'Flagle',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color.fromARGB(255, 3, 89, 228),
-          ),
-        ),
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.system,
       ),
     );
   }

@@ -862,7 +862,7 @@ const List<Map<String, dynamic>> countriesList = [
   },
   {
     "id": 124,
-    "name": "Níger",
+    "name": "Niger",
     "continent": "Africa",
     "alpha2Code": "NE",
     "population": 28176000,

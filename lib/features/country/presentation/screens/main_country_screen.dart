@@ -47,46 +47,68 @@ class MainCountryScreen extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.blue),
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Icon(Icons.flag, size: 48, color: Colors.white),
+                  Icon(
+                    Icons.flag,
+                    size: 48,
+                    color: Theme.of(context).colorScheme.onSecondary,
+                  ),
                   SizedBox(height: 8),
                   Text(
                     'Flagle',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSecondary,
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
                     'Guess the country!',
-                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSecondary,
+                      fontSize: 14,
+                    ),
                   ),
                 ],
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.home),
+              leading: Icon(
+                Icons.home,
+                color: Theme.of(context).colorScheme.onSecondary,
+              ),
               title: const Text('Home'),
               selected: _isCurrentRoute(context, '/'),
-              selectedTileColor: Colors.blue.withOpacity(0.1),
+              selectedTileColor: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.1),
               onTap: () => _navigateToRoute(context, '/'),
             ),
             ListTile(
-              leading: const Icon(Icons.quiz),
+              leading: Icon(
+                Icons.quiz,
+                color: Theme.of(context).colorScheme.onSecondary,
+              ),
               title: const Text('Guess Country'),
               selected: _isCurrentRoute(context, '/guess-country'),
-              selectedTileColor: Colors.blue.withOpacity(0.1),
+              selectedTileColor: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.1),
               onTap: () => _navigateToRoute(context, '/guess-country'),
             ),
             const Divider(),
             ListTile(
-              leading: const Icon(Icons.settings),
+              leading: Icon(
+                Icons.settings,
+                color: Theme.of(context).colorScheme.onSecondary,
+              ),
               title: const Text('Settings'),
               onTap: () {
                 // TODO: Navegar a pantalla de configuración
@@ -97,7 +119,10 @@ class MainCountryScreen extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.info),
+              leading: Icon(
+                Icons.info,
+                color: Theme.of(context).colorScheme.onSecondary,
+              ),
               title: const Text('About'),
               onTap: () {
                 // TODO: Mostrar información de la app
@@ -106,16 +131,28 @@ class MainCountryScreen extends StatelessWidget {
                   context: context,
                   applicationName: 'Flagle',
                   applicationVersion: '1.0.0',
-                  applicationIcon: const Icon(Icons.flag, size: 48),
+                  applicationIcon: Icon(
+                    Icons.flag,
+                    size: 48,
+                    color: Theme.of(context).colorScheme.onSecondary,
+                  ),
                   children: [
-                    const Text('A fun game to guess countries by their flags!'),
+                    Text(
+                      'A fun game to guess countries by their flags!',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSecondary,
+                      ),
+                    ),
                   ],
                 );
               },
             ),
             const Divider(),
             ListTile(
-              leading: const Icon(Icons.exit_to_app),
+              leading: Icon(
+                Icons.exit_to_app,
+                color: Theme.of(context).colorScheme.onSecondary,
+              ),
               title: const Text('Exit'),
               onTap: () {
                 Navigator.pop(context);
@@ -123,19 +160,39 @@ class MainCountryScreen extends StatelessWidget {
                 showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text('Exit App'),
-                    content: const Text('Are you sure you want to exit?'),
+                    title: Text(
+                      'Exit App',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSecondary,
+                      ),
+                    ),
+                    content: Text(
+                      'Are you sure you want to exit?',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSecondary,
+                      ),
+                    ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text('Cancel'),
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSecondary,
+                          ),
+                        ),
                       ),
                       TextButton(
                         onPressed: () {
                           // Cerrar la app (solo funciona en algunas plataformas)
                           // En web/móvil, esto puede no funcionar como se espera
                         },
-                        child: const Text('Exit'),
+                        child: Text(
+                          'Exit',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSecondary,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -149,9 +206,22 @@ class MainCountryScreen extends StatelessWidget {
         type: BottomNavigationBarType.fixed,
         currentIndex: currentIndex,
         onTap: (index) => _onItemTapped(context, index),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.quiz), label: 'Guess'),
+        selectedLabelStyle: TextStyle(fontWeight: FontWeight.bold),
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.home,
+              color: Theme.of(context).colorScheme.onSecondary,
+            ),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.quiz,
+              color: Theme.of(context).colorScheme.onSecondary,
+            ),
+            label: 'Guess',
+          ),
         ],
       ),
     );

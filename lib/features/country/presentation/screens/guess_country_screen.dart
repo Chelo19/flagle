@@ -16,6 +16,8 @@ class GuessCountryScreen extends StatefulWidget {
 class _GuessCountryScreenState extends State<GuessCountryScreen> {
   final TextEditingController countryNameController = TextEditingController();
   List<String> _countryNames = [];
+  List<String> _remainingCountryNames = [];
+  List<String> _selectedCountryNames = [];
 
   @override
   void initState() {
@@ -35,24 +37,57 @@ class _GuessCountryScreenState extends State<GuessCountryScreen> {
   }
 
   void _checkAnswer(Country country) {
-    if (countryNameController.text.toLowerCase() ==
-        country.name.toLowerCase()) {
-      context.read<CountryBloc>().add(GetRandomCountryEvent());
-      countryNameController.clear();
-    } else {
-      context.read<CountryBloc>().add(IncrementCurrentTryEvent());
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-            SnackBar(
-              content: const Text('Incorrect answer'),
-              duration: const Duration(seconds: 1),
-            ),
-          )
-          .closed
-          .whenComplete(() {
-            countryNameController.clear();
-          });
+    final selectedCountry = countryNameController.text;
+    final countryInList = _remainingCountryNames.firstWhere(
+      (country) => country.toLowerCase() == selectedCountry.toLowerCase(),
+      orElse: () => '',
+    );
+
+    if (countryInList.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Country not in remaining countries'),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+      return;
     }
+    if (selectedCountry.toLowerCase() == country.name.toLowerCase()) {
+      // Respuesta correcta: resetear todo y obtener nuevo país
+      _onSuccessTry();
+    } else {
+      // Respuesta incorrecta: eliminar el país del pool de opciones
+      setState(() {
+        _remainingCountryNames.remove(countryInList);
+        _selectedCountryNames.add(countryInList);
+      });
+      countryNameController.clear();
+      context.read<CountryBloc>().add(IncrementCurrentTryEvent());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Incorrect answer'),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
+  }
+
+  void _skipCountry() {
+    setState(() {
+      _remainingCountryNames = List<String>.from(_countryNames);
+      _selectedCountryNames.clear();
+    });
+    context.read<CountryBloc>().add(GetRandomCountryEvent());
+    countryNameController.clear();
+  }
+
+  void _onSuccessTry() {
+    setState(() {
+      _remainingCountryNames = List<String>.from(_countryNames);
+      _selectedCountryNames.clear();
+    });
+    context.read<CountryBloc>().add(GetRandomCountryEvent());
+    countryNameController.clear();
   }
 
   @override
@@ -71,6 +106,7 @@ class _GuessCountryScreenState extends State<GuessCountryScreen> {
           if (state is GetAllCountriesSuccess) {
             setState(() {
               _countryNames = state.countries.map((c) => c.name).toList();
+              _remainingCountryNames = List<String>.from(_countryNames);
             });
           }
         },
@@ -80,68 +116,101 @@ class _GuessCountryScreenState extends State<GuessCountryScreen> {
               return const Center(child: CircularProgressIndicator());
             case GetRandomCountrySuccess():
               final country = state.country;
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (country.flagImageUrl.isNotEmpty)
-                      SizedBox(
-                        width: 200,
-                        height: 150,
-                        child: country.flagImageUrl.endsWith('.svg')
-                            ? SvgPicture.network(
-                                country.flagImageUrl,
-                                placeholderBuilder: (context) =>
-                                    const CircularProgressIndicator(),
-                                fit: BoxFit.contain,
-                              )
-                            : Image.network(
-                                country.flagImageUrl,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return const Icon(Icons.error);
-                                },
-                                fit: BoxFit.contain,
+              return SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  child: Column(
+                    spacing: 16,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (country.flagImageUrl.isNotEmpty)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            width: double.infinity,
+                            height: 250,
+                            color: Theme.of(context).colorScheme.secondary,
+                            child: country.flagImageUrl.endsWith('.svg')
+                                ? SvgPicture.network(
+                                    country.flagImageUrl,
+                                    placeholderBuilder: (context) =>
+                                        const CircularProgressIndicator(),
+                                    fit: BoxFit.fill,
+                                  )
+                                : Image.network(
+                                    country.flagImageUrl,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(Icons.error);
+                                    },
+                                    fit: BoxFit.contain,
+                                  ),
+                          ),
+                        )
+                      else
+                        const Text('No flag image url found'),
+                      Text('Current try: ${state.currentTry}'),
+                      Row(
+                        spacing: 8,
+                        children: <Widget>[
+                          if (state.currentTry > 1)
+                            _HintComponent(hint: '🗺️ ${country.continent}'),
+                          if (state.currentTry > 2)
+                            _HintComponent(
+                              hint: '👥 ${country.population.toString()}',
+                            ),
+                          if (state.currentTry > 3)
+                            _HintComponent(hint: '🚩 ${country.name}'),
+                        ],
+                      ),
+                      Column(
+                        spacing: 8,
+                        children: [
+                          for (var selectedCountry in _selectedCountryNames)
+                            _SelectedCountryComponent(
+                              countryName: selectedCountry,
+                            ),
+                        ],
+                      ),
+                      _CountryAutocomplete(
+                        controller: countryNameController,
+                        countryNames: _remainingCountryNames,
+                      ),
+                      Row(
+                        spacing: 8,
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(context).colorScheme.secondary,
+                                minimumSize: const Size(0, 36.0),
                               ),
-                      )
-                    else
-                      const Text('No flag image url found'),
-                    const SizedBox(height: 20),
-                    _CountryAutocomplete(
-                      controller: countryNameController,
-                      countryNames: _countryNames,
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: () => {_checkAnswer(country)},
-                      child: const Text('Check Answer'),
-                    ),
-                    const SizedBox(height: 20),
-                    Text('Current try: ${state.currentTry}'),
-                    const SizedBox(height: 20),
-                    if (state.currentTry > 1)
-                      Text(
-                        country.continent,
-                        style: Theme.of(context).textTheme.headlineMedium,
+                              onPressed: () => _skipCountry(),
+                              child: Text('Skip', style: TextStyle(color: Theme.of(context).colorScheme.onSecondary)),
+                            ),
+                          ),
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary,
+                                foregroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimary,
+                                minimumSize: const Size(0, 36.0),
+                              ),
+                              onPressed: () => _checkAnswer(country),
+                              child: Text('Check Answer', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
+                            ),
+                          ),
+                        ],
                       ),
-                    const SizedBox(height: 20),
-                    if (state.currentTry > 2)
-                      Text(
-                        country.population.toString(),
-                        style: Theme.of(context).textTheme.headlineMedium,
-                      ),
-                    const SizedBox(height: 20),
-                    if (state.currentTry > 3)
-                      Text(
-                        country.name,
-                        style: Theme.of(context).textTheme.headlineMedium,
-                      ),
-                    ElevatedButton(
-                      onPressed: () => context.read<CountryBloc>().add(
-                        GetRandomCountryEvent(),
-                      ),
-                      child: const Text('Skip'),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             case GetRandomCountryFailure():
@@ -150,8 +219,10 @@ class _GuessCountryScreenState extends State<GuessCountryScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text('Error: ${state.failure.message}'),
-                    const SizedBox(height: 20),
                     ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 36.0),
+                      ),
                       onPressed: () =>
                           context.read<CountryBloc>().add(SkipCountryEvent()),
                       child: const Text('Try Again'),
@@ -241,6 +312,70 @@ class _CountryAutocomplete extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _HintComponent extends StatelessWidget {
+  final String hint;
+
+  const _HintComponent({required this.hint});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Center(
+            child: Text(
+              hint,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSecondary,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SelectedCountryComponent extends StatelessWidget {
+  final String countryName;
+  const _SelectedCountryComponent({required this.countryName});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints(minWidth: double.infinity, minHeight: 36.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.secondary,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Row(
+          spacing: 8,
+          children: [
+            Icon(
+              Icons.wrong_location,
+              color: Theme.of(context).colorScheme.onSecondary,
+            ),
+            Text(
+              countryName,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
